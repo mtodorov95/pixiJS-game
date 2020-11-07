@@ -1,5 +1,12 @@
 const gameContainer = document.querySelector('.game');
 
+const W = 87;
+const A = 65;
+const S = 83;
+const D = 68;
+
+let keys = {};
+
 let titleScreen;
 let mainScreen;
 let endScreen;
@@ -14,6 +21,9 @@ let bg7;
 let bg8;
 let backgroundX=0;
 let backgroundSpeed = 1;
+
+let player;
+let playerSheet = {};
 
 
 const app = new PIXI.Application(
@@ -98,12 +108,25 @@ function showLoading(e){
     // display loading spinner
 }
 
+// Keyboard controlls
+window.addEventListener('keydown', keyDown);
+window.addEventListener('keyup', keyUp);
+
+function keyDown(e){
+    keys[e.keyCode] = true;
+}
+
+function keyUp(e){
+    keys[e.keyCode] = false;
+}
+
 function initGame(e){
+    createBackground();
+
     createPlayerSheet();
     createEnemySheet();
     createPlayer();
     createEnemy();
-    createBackground();
 
     app.ticker.add(gameLoop);
 }
@@ -112,36 +135,28 @@ function logError(e){
     console.log(e.message);
 }
 
-// Implement
 function createPlayerSheet(){
-    // let sheet = new PIXI.BaseTexture.from(app.loader.resources.player.url);
-    // let w = 32;
-    // let h = 32;
-    // playerSheet.idle = [
-    //     new PIXI.Texture(sheet, new PIXI.Rectangle(0*w,0,w,h)),
-    //     new PIXI.Texture(sheet, new PIXI.Rectangle(1*w,0,w,h)),
-    //     new PIXI.Texture(sheet, new PIXI.Rectangle(2*w,0,w,h)),
-    //     new PIXI.Texture(sheet, new PIXI.Rectangle(3*w,0,w,h)),
-    // ];
-
-    // playerSheet.walk = [
-    //     new PIXI.Texture(sheet, new PIXI.Rectangle(4*w,0,w,h)),
-    //     new PIXI.Texture(sheet, new PIXI.Rectangle(5*w,0,w,h)),
-    //     new PIXI.Texture(sheet, new PIXI.Rectangle(6*w,0,w,h)),
-    //     new PIXI.Texture(sheet, new PIXI.Rectangle(7*w,0,w,h)),
-    // ];
+    let sheet = new PIXI.BaseTexture.from(app.loader.resources.player.url);
+    let frameWidth = 32;
+    let frameHeight = 32;
+    playerSheet.move = [
+        new PIXI.Texture(sheet, new PIXI.Rectangle(0*frameWidth,0,frameWidth,frameHeight)),
+        new PIXI.Texture(sheet, new PIXI.Rectangle(1*frameWidth,0,frameWidth,frameHeight)),
+        new PIXI.Texture(sheet, new PIXI.Rectangle(2*frameWidth,0,frameWidth,frameHeight)),
+    ];
 }
 
-// Implement
 function createPlayer(){
-    // player = new PIXI.AnimatedSprite(playerSheet.idle);
-    // player.anchor.set(0.5);
-    // player.animationSpeed = .2;
-    // player.loop = false;
-    // player.x = 50;
-    // player.y = app.view.height / 2;
-    // app.stage.addChild(player);
-    // player.play();
+    player = new PIXI.AnimatedSprite(playerSheet.move);
+    player.width = 64;
+    player.height = 64;
+    player.anchor.set(0.5);
+    player.animationSpeed = .2;
+    player.loop = true;
+    player.x = app.view.width / 5;
+    player.y = app.view.height / 2;
+    mainScreen.addChild(player);
+    player.play();
 }
 
 function createEnemySheet(){
@@ -172,6 +187,7 @@ function createTilingSprite(texture){
 
 function gameLoop(){
     updateBackground();
+    checkMovement();
 }
 
 function updateBackground(){
@@ -184,4 +200,19 @@ function updateBackground(){
     bg6.tilePosition.x = backgroundX / 4;
     bg7.tilePosition.x = backgroundX / 4;
     bg8.tilePosition.x = backgroundX / 4;
+}
+
+function checkMovement(){
+    if(keys[W]){
+        player.y -= 5;
+    }
+    if (keys[A]){
+        player.x -= 5; 
+    }
+    if (keys[S]){
+        player.y += 5;
+    }
+    if (keys[D]){
+        player.x += 5;
+    }
 }
