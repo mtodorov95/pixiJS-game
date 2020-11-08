@@ -1,9 +1,10 @@
 /*
  - Add help screen
- - Add bg to title screen
+ - Load menuBg properly
  - Fix enemies spawn range
  - Add player movement bounds
  - Implement end screen
+ - Sync game events
 */
 
 const gameContainer = document.querySelector('.game');
@@ -38,6 +39,9 @@ let enemySheet = {};
 let flames = [];
 let flameSpeed = 5;
 
+let score = 0;
+let maxScore;
+
 
 const app = new PIXI.Application(
     {
@@ -55,6 +59,7 @@ app.loader
     .add("player", "/player/player.png")
     .add("enemy", "/enemy/enemy.png")
     .add('flame', '/misc/flame.png')
+    .add('menuBg', '/background/menuBg.png')
     .add('background01', '/background/01.png')
     .add('background02', '/background/02.png')
     .add('background03', '/background/03.png')
@@ -75,6 +80,8 @@ titleScreen = new PIXI.Container();
 mainScreen = new PIXI.Container();
 endScreen = new PIXI.Container();
 
+mainScreen.sortableChildren = true;
+
 mainScreen.visible = false;
 endScreen.visible = false;
 
@@ -83,10 +90,11 @@ app.stage.addChild(mainScreen);
 app.stage.addChild(endScreen);
 
 // Screens
-let titleRect = new PIXI.Graphics();
-titleRect.beginFill(0x423B38);
-titleRect.drawRect(0,0,app.view.width, app.view.height);
-titleScreen.addChild(titleRect);
+let titleBg = new PIXI.Sprite.from('images/background/menuBg.png');
+titleBg.x = titleScreen.x;
+titleBg.y = titleScreen.y;
+titleScreen.addChild(titleBg);
+
 // Title
 let titleText = new PIXI.Text('Ghosting');
 titleText.anchor.set(0.5);
@@ -107,6 +115,13 @@ startButton.style = new PIXI.TextStyle({fill:0xFF0000, fontSize:40, fontFamily:'
 startButton.on('pointerup', goToMain);
 
 titleScreen.addChild(startButton);
+
+let scoreText = new PIXI.Text(`Score: ${score}`);
+scoreText.x = mainScreen.x;
+scoreText.y = mainScreen.y;
+scoreText.zIndex = 10;
+scoreText.style = new PIXI.TextStyle({fill:0xFF0000, fontSize:40, fontFamily:'Vecna', stroke: 0x000000, strokeThickness:3})
+mainScreen.addChild(scoreText);
 
 function goToMain(e){
     titleScreen.visible = false;
@@ -144,6 +159,10 @@ function initGame(e){
     setInterval(()=>{
         shootFlame();
     },3000);
+    setInterval(()=>{
+      score++;  
+      scoreText.text = `Score: ${score}`;
+    },1000)
 
     app.ticker.add(gameLoop);
 }
