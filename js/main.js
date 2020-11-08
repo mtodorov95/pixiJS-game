@@ -1,3 +1,11 @@
+/*
+ - Add help screen
+ - Add bg to title screen
+ - Fix enemies spawn range
+ - Add player movement bounds
+ - Implement end screen
+*/
+
 const gameContainer = document.querySelector('.game');
 
 const W = 87;
@@ -28,6 +36,7 @@ let playerSheet = {};
 let enemies = [];
 let enemySheet = {};
 let flames = [];
+let flameSpeed = 5;
 
 
 const app = new PIXI.Application(
@@ -45,8 +54,7 @@ app.loader.baseUrl = "images";
 app.loader
     .add("player", "/player/player.png")
     .add("enemy", "/enemy/enemy.png")
-    .add('flame1', '/misc/flame1.png')
-    .add('flame2', '/misc/flame2.png')
+    .add('flame', '/misc/flame.png')
     .add('background01', '/background/01.png')
     .add('background02', '/background/02.png')
     .add('background03', '/background/03.png')
@@ -133,12 +141,26 @@ function initGame(e){
             createEnemy();
         } 
     }, 2000)
+    setInterval(()=>{
+        shootFlame();
+    },3000);
 
     app.ticker.add(gameLoop);
 }
 
 function logError(e){
     console.log(e.message);
+}
+
+function createBackground(){
+    bg8 = createTilingSprite(app.loader.resources.background08.texture);
+    bg7 = createTilingSprite(app.loader.resources.background07.texture);
+    bg6 = createTilingSprite(app.loader.resources.background06.texture);
+    bg5 = createTilingSprite(app.loader.resources.background05.texture);
+    bg4 = createTilingSprite(app.loader.resources.background04.texture);
+    bg3 = createTilingSprite(app.loader.resources.background03.texture);
+    bg2 = createTilingSprite(app.loader.resources.background02.texture);
+    bg1 = createTilingSprite(app.loader.resources.background01.texture);  
 }
 
 function createPlayerSheet(){
@@ -152,17 +174,6 @@ function createPlayerSheet(){
     ];
 }
 
-function createPlayer(){
-    player = new PIXI.AnimatedSprite(playerSheet.move);
-    player.anchor.set(0.5);
-    player.animationSpeed = .2;
-    player.loop = true;
-    player.x = app.view.width / 5;
-    player.y = app.view.height / 2;
-    mainScreen.addChild(player);
-    player.play();
-}
-
 function createEnemySheet(){
     let sheet = new PIXI.BaseTexture.from(app.loader.resources.enemy.url);
     let frameWidth = 64;
@@ -172,6 +183,33 @@ function createEnemySheet(){
         new PIXI.Texture(sheet, new PIXI.Rectangle(1*frameWidth,0,frameWidth,frameHeight)),
         new PIXI.Texture(sheet, new PIXI.Rectangle(2*frameWidth,0,frameWidth,frameHeight)),
     ];
+}
+
+function shootFlame(){
+    enemies.forEach(enemy=>{
+        createFlame(enemy);
+    });
+}
+
+function createFlame(origin){
+    let flame = new PIXI.Sprite.from(app.loader.resources.flame.texture);
+    flame.anchor.set(0.5);
+    flame.x = origin.x;
+    flame.y = origin.y;
+    flame.speed = flameSpeed;
+    mainScreen.addChild(flame);
+    flames.push(flame);
+}
+
+function createPlayer(){
+    player = new PIXI.AnimatedSprite(playerSheet.move);
+    player.anchor.set(0.5);
+    player.animationSpeed = .2;
+    player.loop = true;
+    player.x = app.view.width / 5;
+    player.y = app.view.height / 2;
+    mainScreen.addChild(player);
+    player.play();
 }
 
 function createEnemy(){
@@ -186,17 +224,6 @@ function createEnemy(){
     newEnemy.play();
 }
 
-function createBackground(){
-    bg8 = createTilingSprite(app.loader.resources.background08.texture);
-    bg7 = createTilingSprite(app.loader.resources.background07.texture);
-    bg6 = createTilingSprite(app.loader.resources.background06.texture);
-    bg5 = createTilingSprite(app.loader.resources.background05.texture);
-    bg4 = createTilingSprite(app.loader.resources.background04.texture);
-    bg3 = createTilingSprite(app.loader.resources.background03.texture);
-    bg2 = createTilingSprite(app.loader.resources.background02.texture);
-    bg1 = createTilingSprite(app.loader.resources.background01.texture);  
-}
-
 function createTilingSprite(texture){
     let tiling = new PIXI.TilingSprite(texture, app.view.width, app.view.height);
     tiling.position.set(0,0);
@@ -208,8 +235,8 @@ function gameLoop(){
     updateBackground();
     checkMovement();
     updateEnemies();
+    updateFlames();
     detectCollision();
-    console.log(enemies);
 }
 
 function updateBackground(){
@@ -242,7 +269,7 @@ function checkMovement(){
 function updateEnemies(){
     enemies.forEach(enemy => {
         enemy.x -= backgroundSpeed;
-        if(enemy.x < 0){
+        if(enemy.x < -64){
             enemy.dead = true;
         }
     });
@@ -257,7 +284,12 @@ function updateEnemies(){
 function detectCollision(){
     enemies.forEach(enemy => {
         if(collides(player, enemy)){
-            console.log('Hit!');
+            console.log('Hit enemy!');
+        }
+    });
+    flames.forEach(flame => {
+        if(collides(player, flame)){
+            console.log('Hit flame!');
         }
     });
 }
@@ -269,4 +301,19 @@ function collides(a, b){
         aBox.x < bBox.width + bBox.x &&
         aBox.y + aBox.height > bBox.y &&
         aBox.y < bBox.height + bBox.y;
+}
+
+function updateFlames(){
+    flames.forEach(flame => {
+        flame.x -= flameSpeed;
+        if(flame.x < -32){
+            flame.dead = true;
+        }
+    });
+    for(let i=0; i<flames.length;i++){
+        if(flames[i].dead){
+            mainScreen.removeChild(flames[i]);
+            flames.splice(i, 1);
+        }
+    }
 }
