@@ -25,6 +25,10 @@ let backgroundSpeed = 1;
 let player;
 let playerSheet = {};
 
+let enemies = [];
+let enemySheet = {};
+let flames = [];
+
 
 const app = new PIXI.Application(
     {
@@ -36,7 +40,6 @@ const app = new PIXI.Application(
 
 gameContainer.appendChild(app.view);
 
-// Preload assets
 
 app.loader.baseUrl = "images";
 app.loader
@@ -122,11 +125,14 @@ function keyUp(e){
 
 function initGame(e){
     createBackground();
-
     createPlayerSheet();
     createEnemySheet();
     createPlayer();
-    createEnemy();
+    setInterval(() => {
+        if(enemies.length < 5){
+            createEnemy();
+        } 
+    }, 2000)
 
     app.ticker.add(gameLoop);
 }
@@ -137,8 +143,8 @@ function logError(e){
 
 function createPlayerSheet(){
     let sheet = new PIXI.BaseTexture.from(app.loader.resources.player.url);
-    let frameWidth = 32;
-    let frameHeight = 32;
+    let frameWidth = 64;
+    let frameHeight = 64;
     playerSheet.move = [
         new PIXI.Texture(sheet, new PIXI.Rectangle(0*frameWidth,0,frameWidth,frameHeight)),
         new PIXI.Texture(sheet, new PIXI.Rectangle(1*frameWidth,0,frameWidth,frameHeight)),
@@ -148,8 +154,6 @@ function createPlayerSheet(){
 
 function createPlayer(){
     player = new PIXI.AnimatedSprite(playerSheet.move);
-    player.width = 64;
-    player.height = 64;
     player.anchor.set(0.5);
     player.animationSpeed = .2;
     player.loop = true;
@@ -160,11 +164,26 @@ function createPlayer(){
 }
 
 function createEnemySheet(){
-
+    let sheet = new PIXI.BaseTexture.from(app.loader.resources.enemy.url);
+    let frameWidth = 64;
+    let frameHeight = 64;
+    enemySheet.move = [
+        new PIXI.Texture(sheet, new PIXI.Rectangle(0*frameWidth,0,frameWidth,frameHeight)),
+        new PIXI.Texture(sheet, new PIXI.Rectangle(1*frameWidth,0,frameWidth,frameHeight)),
+        new PIXI.Texture(sheet, new PIXI.Rectangle(2*frameWidth,0,frameWidth,frameHeight)),
+    ];
 }
 
 function createEnemy(){
-
+    newEnemy = new PIXI.AnimatedSprite(enemySheet.move);
+    newEnemy.anchor.set(0.5);
+    newEnemy.animationSpeed = .2;
+    newEnemy.loop = true;
+    newEnemy.x = app.view.width;
+    newEnemy.y = Math.random() * app.view.height;
+    enemies.push(newEnemy);
+    mainScreen.addChild(newEnemy);
+    newEnemy.play();
 }
 
 function createBackground(){
@@ -188,6 +207,9 @@ function createTilingSprite(texture){
 function gameLoop(){
     updateBackground();
     checkMovement();
+    updateEnemies();
+    detectCollision();
+    console.log(enemies);
 }
 
 function updateBackground(){
@@ -215,4 +237,36 @@ function checkMovement(){
     if (keys[D]){
         player.x += 5;
     }
+}
+
+function updateEnemies(){
+    enemies.forEach(enemy => {
+        enemy.x -= backgroundSpeed;
+        if(enemy.x < 0){
+            enemy.dead = true;
+        }
+    });
+    for(let i=0; i<enemies.length;i++){
+        if(enemies[i].dead){
+            mainScreen.removeChild(enemies[i]);
+            enemies.splice(i, 1);
+        }
+    }
+}
+
+function detectCollision(){
+    enemies.forEach(enemy => {
+        if(collides(player, enemy)){
+            console.log('Hit!');
+        }
+    });
+}
+
+function collides(a, b){
+    let aBox = a.getBounds();
+    let bBox = b.getBounds();
+    return aBox.x + aBox.width > bBox.x &&
+        aBox.x < bBox.width + bBox.x &&
+        aBox.y + aBox.height > bBox.y &&
+        aBox.y < bBox.height + bBox.y;
 }
