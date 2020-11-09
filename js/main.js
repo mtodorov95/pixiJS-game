@@ -2,7 +2,6 @@
  - Fix enemies spawn range
  - Add player movement bounds
  - Implement end screen
- - Sync game events
 */
 
 const gameContainer = document.querySelector('.game');
@@ -34,8 +33,15 @@ let playerSheet = {};
 
 let enemies = [];
 let enemySheet = {};
+let enemySpeed = 2;
+let spawnRate = 3600;
+let maxEnemies = 5;
+let spawnTimer;
+
 let flames = [];
-let flameSpeed = 5;
+let flameSpeed = 4;
+let attackRate = 4000;
+let attackTimer;
 
 let score = 0;
 let maxScore;
@@ -89,21 +95,19 @@ app.stage.addChild(helpScreen);
 app.stage.addChild(mainScreen);
 app.stage.addChild(endScreen);
 
-// Screens
+// Menu
+
 let titleBg = new PIXI.Sprite.from('images/background/menuBg.png');
 titleBg.x = menuScreen.x;
 titleBg.y = menuScreen.y;
 menuScreen.addChild(titleBg);
 
-// Title
 let titleText = new PIXI.Text('Ghost Game');
 titleText.anchor.set(0.5);
 titleText.x = app.view.width / 2;
 titleText.y = app.view.height / 5;
 titleText.style = new PIXI.TextStyle({fill:0xAAAAAA, fontSize:60, fontFamily:'Vecna', stroke: 0x000000, strokeThickness:3})
 menuScreen.addChild(titleText);
-
-// start button
 
 let startButton = new PIXI.Text('Start');
 startButton.anchor.set(0.5);
@@ -112,11 +116,9 @@ startButton.y = app.view.height / 2;
 startButton.interactive = true;
 startButton.buttonMode = true;
 startButton.style = new PIXI.TextStyle({fill:0xFF0000, fontSize:42, fontFamily:'Vecna', stroke: 0x000000, strokeThickness:3})
-startButton.on('pointerup', goToMain);
+startButton.on('pointerup', startGame);
 
 menuScreen.addChild(startButton);
-
-// help
 
 let helpButton = new PIXI.Text('Help');
 helpButton.anchor.set(0.5);
@@ -162,6 +164,15 @@ scoreText.zIndex = 10;
 scoreText.style = new PIXI.TextStyle({fill:0xFF0000, fontSize:40, fontFamily:'Vecna', stroke: 0x000000, strokeThickness:3})
 mainScreen.addChild(scoreText);
 
+function startGame(e){
+    goToMain();
+    app.ticker.add(gameLoop);
+    spawnEnemies();
+    spawnFlames();
+    incrementScore();
+    incrementDificulty();
+}
+
 function goToMain(e){
     menuScreen.visible = false;
     helpScreen.visible = false;
@@ -185,10 +196,50 @@ function goToMenu(e){
 
 function showLoading(e){
     console.log(e.progress);
-    // display loading spinner
 }
 
-// Keyboard controlls
+function spawnEnemies(){
+    spawnTimer = setInterval(() => {
+        if(enemies.length < maxEnemies){
+            createEnemy();
+        } 
+    }, spawnRate)
+}
+
+function spawnFlames(){
+    attackTimer = setInterval(()=>{
+        shootFlame();
+    }, attackRate);
+}
+
+function incrementScore(){
+    setInterval(()=>{
+        score++;  
+        scoreText.text = `Score: ${score}`;
+      }, 1000)
+}
+
+function incrementDificulty(){
+    setInterval(() => {
+        if(spawnRate > 500){
+            clearInterval(spawnTimer);
+            spawnRate-=200;
+            spawnEnemies();
+        }
+        if(attackRate > 1000){
+            clearInterval(attackTimer)
+            attackRate-=100;
+            spawnFlames();
+        }
+        enemySpeed+=0.02;
+        flameSpeed+=0.04;
+        backgroundSpeed+=0.01;
+        if(score > 100){
+            maxEnemies = 6;
+        }
+    }, 10000)
+}
+
 window.addEventListener('keydown', keyDown);
 window.addEventListener('keyup', keyUp);
 
@@ -205,20 +256,6 @@ function initGame(e){
     createPlayerSheet();
     createEnemySheet();
     createPlayer();
-    setInterval(() => {
-        if(enemies.length < 5){
-            createEnemy();
-        } 
-    }, 2000)
-    setInterval(()=>{
-        shootFlame();
-    },3000);
-    setInterval(()=>{
-      score++;  
-      scoreText.text = `Score: ${score}`;
-    },1000)
-
-    app.ticker.add(gameLoop);
 }
 
 function logError(e){
@@ -341,7 +378,7 @@ function checkMovement(){
 
 function updateEnemies(){
     enemies.forEach(enemy => {
-        enemy.x -= backgroundSpeed;
+        enemy.x -= enemySpeed;
         if(enemy.x < -64){
             enemy.dead = true;
         }
