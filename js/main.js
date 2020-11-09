@@ -44,8 +44,22 @@ let attackRate = 4000;
 let attackTimer;
 
 let score = 0;
+let scoreTimer;
 let maxScore;
 
+let dificultyTimer;
+
+
+window.addEventListener('keydown', keyDown);
+window.addEventListener('keyup', keyUp);
+
+function keyDown(e){
+    keys[e.keyCode] = true;
+}
+
+function keyUp(e){
+    keys[e.keyCode] = false;
+}
 
 const app = new PIXI.Application(
     {
@@ -134,8 +148,8 @@ menuScreen.addChild(helpButton);
 // Help 
 
 let helpBg = new PIXI.Sprite.from('images/background/menuBg.png');
-helpBg.x = menuScreen.x;
-helpBg.y = menuScreen.y;
+helpBg.x = helpScreen.x;
+helpBg.y = helpScreen.y;
 helpScreen.addChild(helpBg);
 
 let helpText = new PIXI.Text('Use W, A, S, D to move around and avoid the wraiths and their spells');
@@ -157,18 +171,50 @@ backButton.on('pointerup', goToMenu);
 helpScreen.addChild(backButton);
 
 
-let scoreText = new PIXI.Text(`Score: ${score}`);
+let scoreText = new PIXI.Text('Score: ');
 scoreText.x = mainScreen.x;
 scoreText.y = mainScreen.y;
 scoreText.zIndex = 10;
 scoreText.style = new PIXI.TextStyle({fill:0xFF0000, fontSize:40, fontFamily:'Vecna', stroke: 0x000000, strokeThickness:3})
 mainScreen.addChild(scoreText);
 
+// End
+
+let endBg = new PIXI.Sprite.from('images/background/menuBg.png');
+endBg.x = endScreen.x;
+endBg.y = endScreen.y;
+endScreen.addChild(endBg);
+
+let endText = new PIXI.Text('You died');
+endText.anchor.set(0.5);
+endText.x = app.view.width / 2;
+endText.y = app.view.height / 5;
+endText.style = new PIXI.TextStyle({fill:0xFF0000, fontSize:60, fontFamily:'Vecna', stroke: 0x000000, strokeThickness:3})
+endScreen.addChild(endText);
+
+let endScore = new PIXI.Text('Your score: ');
+endScore.anchor.set(0.5);
+endScore.x = app.view.width / 2;
+endScore.y = app.view.height / 3;
+endScore.style = new PIXI.TextStyle({fill:0xAAAAAA, fontSize:42, fontFamily:'Vecna', stroke: 0x000000, strokeThickness:3})
+endScreen.addChild(endScore);
+
+let menuButton = new PIXI.Text('Menu');
+menuButton.anchor.set(0.5);
+menuButton.x = app.view.width / 2;
+menuButton.y = app.view.height / 2;
+menuButton.interactive = true;
+menuButton.buttonMode = true;
+menuButton.style = new PIXI.TextStyle({fill:0xFF0000, fontSize:36, fontFamily:'Vecna', stroke: 0x000000, strokeThickness:3})
+menuButton.on('pointerup', goToMenu);
+
+endScreen.addChild(menuButton);
+
 function startGame(e){
-    goToMain();
     app.ticker.add(gameLoop);
     spawnEnemies();
     spawnFlames();
+    goToMain();
     incrementScore();
     incrementDificulty();
 }
@@ -213,14 +259,14 @@ function spawnFlames(){
 }
 
 function incrementScore(){
-    setInterval(()=>{
+    scoreTimer = setInterval(()=>{
         score++;  
         scoreText.text = `Score: ${score}`;
       }, 1000)
 }
 
 function incrementDificulty(){
-    setInterval(() => {
+    dificultyTimer = setInterval(() => {
         if(spawnRate > 500){
             clearInterval(spawnTimer);
             spawnRate-=200;
@@ -238,17 +284,6 @@ function incrementDificulty(){
             maxEnemies = 6;
         }
     }, 10000)
-}
-
-window.addEventListener('keydown', keyDown);
-window.addEventListener('keyup', keyUp);
-
-function keyDown(e){
-    keys[e.keyCode] = true;
-}
-
-function keyUp(e){
-    keys[e.keyCode] = false;
 }
 
 function initGame(e){
@@ -346,7 +381,8 @@ function gameLoop(){
     checkMovement();
     updateEnemies();
     updateFlames();
-    detectCollision();
+    detectCollision(enemies);
+    detectCollision(flames);
 }
 
 function updateBackground(){
@@ -391,15 +427,11 @@ function updateEnemies(){
     }
 }
 
-function detectCollision(){
-    enemies.forEach(enemy => {
-        if(collides(player, enemy)){
-            console.log('Hit enemy!');
-        }
-    });
-    flames.forEach(flame => {
-        if(collides(player, flame)){
-            console.log('Hit flame!');
+function detectCollision(entities){
+    entities.forEach(entity => {
+        if(collides(player, entity)){
+            stopGame();
+            showEndScreen();
         }
     });
 }
@@ -426,4 +458,38 @@ function updateFlames(){
             flames.splice(i, 1);
         }
     }
+}
+
+function stopGame(){
+    app.ticker.remove(gameLoop);
+    clearInterval(scoreTimer);
+    endScore.text = `Your score: ${score}`;
+    clearInterval(spawnTimer);
+    clearInterval(attackTimer);
+    clearInterval(dificultyTimer);
+    player.stop();
+    enemies.forEach(enemy => {
+        enemy.stop();
+    })
+    reconfigureGame();
+}
+
+function showEndScreen(){
+    menuScreen.visible = false;
+    mainScreen.visible = false;
+    helpScreen.visible = false;
+    endScreen.visible = true;
+}
+
+function reconfigureGame(){
+    enemies = [];
+    flames = [];
+    score = 0;
+    backgroundSpeed = 1;
+    enemySpeed = 2;
+    spawnRate = 3600;
+    maxEnemies = 5;
+    flameSpeed = 4;
+    attackRate = 4000;
+    initGame();
 }
