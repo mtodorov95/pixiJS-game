@@ -1,9 +1,3 @@
-/*
- - Fix enemies spawn range
- - Add player movement bounds
- - Implement end screen
-*/
-
 const gameContainer = document.querySelector('.game');
 
 const W = 87;
@@ -172,8 +166,8 @@ helpScreen.addChild(backButton);
 
 
 let scoreText = new PIXI.Text('Score: ');
-scoreText.x = mainScreen.x;
-scoreText.y = mainScreen.y;
+scoreText.x = 10;
+scoreText.y = 10;
 scoreText.zIndex = 10;
 scoreText.style = new PIXI.TextStyle({fill:0xFF0000, fontSize:40, fontFamily:'Vecna', stroke: 0x000000, strokeThickness:3})
 mainScreen.addChild(scoreText);
@@ -338,7 +332,6 @@ function shootFlame(){
 
 function createFlame(origin){
     let flame = new PIXI.Sprite.from(app.loader.resources.flame.texture);
-    flame.anchor.set(0.5);
     flame.x = origin.x;
     flame.y = origin.y;
     flame.speed = flameSpeed;
@@ -348,7 +341,6 @@ function createFlame(origin){
 
 function createPlayer(){
     player = new PIXI.AnimatedSprite(playerSheet.move);
-    player.anchor.set(0.5);
     player.animationSpeed = .2;
     player.loop = true;
     player.x = app.view.width / 5;
@@ -359,11 +351,10 @@ function createPlayer(){
 
 function createEnemy(){
     newEnemy = new PIXI.AnimatedSprite(enemySheet.move);
-    newEnemy.anchor.set(0.5);
     newEnemy.animationSpeed = .2;
     newEnemy.loop = true;
     newEnemy.x = app.view.width;
-    newEnemy.y = Math.random() * app.view.height;
+    newEnemy.y = Math.random() * (app.view.height - 64);
     enemies.push(newEnemy);
     mainScreen.addChild(newEnemy);
     newEnemy.play();
@@ -399,16 +390,24 @@ function updateBackground(){
 
 function checkMovement(){
     if(keys[W]){
-        player.y -= 5;
+        if(player.y > 0){
+            player.y -= 5;
+        }
     }
     if (keys[A]){
-        player.x -= 5; 
+        if(player.x > 0){
+            player.x -= 5;
+        }
     }
     if (keys[S]){
-        player.y += 5;
+        if(player.y < app.view.height - player.height){
+            player.y += 5;
+        }
     }
     if (keys[D]){
-        player.x += 5;
+        if(player.x < app.view.width - player.width){
+            player.x += 5;
+        }
     }
 }
 
