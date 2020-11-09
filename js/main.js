@@ -1,6 +1,4 @@
 /*
- - Add help screen
- - Load menuBg properly
  - Fix enemies spawn range
  - Add player movement bounds
  - Implement end screen
@@ -59,7 +57,6 @@ app.loader
     .add("player", "/player/player.png")
     .add("enemy", "/enemy/enemy.png")
     .add('flame', '/misc/flame.png')
-    .add('menuBg', '/background/menuBg.png')
     .add('background01', '/background/01.png')
     .add('background02', '/background/02.png')
     .add('background03', '/background/03.png')
@@ -76,32 +73,35 @@ app.loader.onError.add(logError);
 app.loader.load();
 
 
-titleScreen = new PIXI.Container();
+menuScreen = new PIXI.Container();
+helpScreen = new PIXI.Container();
 mainScreen = new PIXI.Container();
 endScreen = new PIXI.Container();
 
 mainScreen.sortableChildren = true;
 
+helpScreen.visible = false;
 mainScreen.visible = false;
 endScreen.visible = false;
 
-app.stage.addChild(titleScreen);
+app.stage.addChild(menuScreen);
+app.stage.addChild(helpScreen);
 app.stage.addChild(mainScreen);
 app.stage.addChild(endScreen);
 
 // Screens
 let titleBg = new PIXI.Sprite.from('images/background/menuBg.png');
-titleBg.x = titleScreen.x;
-titleBg.y = titleScreen.y;
-titleScreen.addChild(titleBg);
+titleBg.x = menuScreen.x;
+titleBg.y = menuScreen.y;
+menuScreen.addChild(titleBg);
 
 // Title
-let titleText = new PIXI.Text('Ghosting');
+let titleText = new PIXI.Text('Ghost Game');
 titleText.anchor.set(0.5);
 titleText.x = app.view.width / 2;
 titleText.y = app.view.height / 5;
-titleText.style = new PIXI.TextStyle({fill:0xAAAAAA, fontSize:56, fontFamily:'Vecna', stroke: 0x000000, strokeThickness:3})
-titleScreen.addChild(titleText);
+titleText.style = new PIXI.TextStyle({fill:0xAAAAAA, fontSize:60, fontFamily:'Vecna', stroke: 0x000000, strokeThickness:3})
+menuScreen.addChild(titleText);
 
 // start button
 
@@ -111,10 +111,49 @@ startButton.x = app.view.width / 2;
 startButton.y = app.view.height / 2;
 startButton.interactive = true;
 startButton.buttonMode = true;
-startButton.style = new PIXI.TextStyle({fill:0xFF0000, fontSize:40, fontFamily:'Vecna', stroke: 0x000000, strokeThickness:3})
+startButton.style = new PIXI.TextStyle({fill:0xFF0000, fontSize:42, fontFamily:'Vecna', stroke: 0x000000, strokeThickness:3})
 startButton.on('pointerup', goToMain);
 
-titleScreen.addChild(startButton);
+menuScreen.addChild(startButton);
+
+// help
+
+let helpButton = new PIXI.Text('Help');
+helpButton.anchor.set(0.5);
+helpButton.x = app.view.width / 2;
+helpButton.y = app.view.height / 1.5;
+helpButton.interactive = true;
+helpButton.buttonMode = true;
+helpButton.style = new PIXI.TextStyle({fill:0xFF0000, fontSize:32, fontFamily:'Vecna', stroke: 0x000000, strokeThickness:3})
+helpButton.on('pointerup', showHelp);
+
+menuScreen.addChild(helpButton);
+
+// Help 
+
+let helpBg = new PIXI.Sprite.from('images/background/menuBg.png');
+helpBg.x = menuScreen.x;
+helpBg.y = menuScreen.y;
+helpScreen.addChild(helpBg);
+
+let helpText = new PIXI.Text('Use W, A, S, D to move around and avoid the wraiths and their spells');
+helpText.anchor.set(0.5);
+helpText.x = app.view.width / 2;
+helpText.y = app.view.height / 3;
+helpText.style = new PIXI.TextStyle({fill:0xAAAAAA, fontSize:28, fontFamily:'Vecna', stroke: 0x000000, strokeThickness:3})
+helpScreen.addChild(helpText);
+
+let backButton = new PIXI.Text('Back');
+backButton.anchor.set(0.5);
+backButton.x = app.view.width / 2;
+backButton.y = app.view.height / 2;
+backButton.interactive = true;
+backButton.buttonMode = true;
+backButton.style = new PIXI.TextStyle({fill:0xFF0000, fontSize:40, fontFamily:'Vecna', stroke: 0x000000, strokeThickness:3})
+backButton.on('pointerup', goToMenu);
+
+helpScreen.addChild(backButton);
+
 
 let scoreText = new PIXI.Text(`Score: ${score}`);
 scoreText.x = mainScreen.x;
@@ -124,8 +163,23 @@ scoreText.style = new PIXI.TextStyle({fill:0xFF0000, fontSize:40, fontFamily:'Ve
 mainScreen.addChild(scoreText);
 
 function goToMain(e){
-    titleScreen.visible = false;
+    menuScreen.visible = false;
+    helpScreen.visible = false;
     mainScreen.visible = true;
+    endScreen.visible = false;
+}
+
+function showHelp(e){
+    menuScreen.visible = false;
+    helpScreen.visible = true;
+    mainScreen.visible = false;
+    endScreen.visible = false;
+}
+
+function goToMenu(e){
+    menuScreen.visible = true;
+    helpScreen.visible = false;
+    mainScreen.visible = false;
     endScreen.visible = false;
 }
 
