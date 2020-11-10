@@ -39,7 +39,6 @@ let attackTimer;
 
 let score = 0;
 let scoreTimer;
-let maxScore;
 
 let dificultyTimer;
 
@@ -64,7 +63,6 @@ const app = new PIXI.Application(
 );
 
 gameContainer.appendChild(app.view);
-
 
 app.loader.baseUrl = "images";
 app.loader
