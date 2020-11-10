@@ -263,7 +263,7 @@ function incrementDificulty(){
     dificultyTimer = setInterval(() => {
         if(spawnRate > 500){
             clearInterval(spawnTimer);
-            spawnRate-=200;
+            spawnRate-=250;
             spawnEnemies();
         }
         if(attackRate > 1000){
@@ -272,10 +272,10 @@ function incrementDificulty(){
             spawnFlames();
         }
         enemySpeed+=0.02;
-        flameSpeed+=0.04;
+        flameSpeed+=0.05;
         backgroundSpeed+=0.01;
         if(score > 100){
-            maxEnemies = 6;
+            maxEnemies = 7;
         }
     }, 10000)
 }
@@ -418,10 +418,24 @@ function updateEnemies(){
             enemy.dead = true;
         }
     });
-    for(let i=0; i<enemies.length;i++){
-        if(enemies[i].dead){
-            mainScreen.removeChild(enemies[i]);
-            enemies.splice(i, 1);
+    removeOffscreenEntities(enemies);
+}
+
+function updateFlames(){
+    flames.forEach(flame => {
+        flame.x -= flameSpeed;
+        if(flame.x < -32){
+            flame.dead = true;
+        }
+    });
+    removeOffscreenEntities(flames);
+}
+
+function removeOffscreenEntities(entities){
+    for(let i=0; i<entities.length;i++){
+        if(entities[i].dead){
+            mainScreen.removeChild(entities[i]);
+            entities.splice(i, 1);
         }
     }
 }
@@ -442,21 +456,6 @@ function collides(a, b){
         aBox.x < bBox.width + bBox.x &&
         aBox.y + aBox.height > bBox.y &&
         aBox.y < bBox.height + bBox.y;
-}
-
-function updateFlames(){
-    flames.forEach(flame => {
-        flame.x -= flameSpeed;
-        if(flame.x < -32){
-            flame.dead = true;
-        }
-    });
-    for(let i=0; i<flames.length;i++){
-        if(flames[i].dead){
-            mainScreen.removeChild(flames[i]);
-            flames.splice(i, 1);
-        }
-    }
 }
 
 function stopGame(){
